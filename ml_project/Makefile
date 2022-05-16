@@ -47,6 +47,10 @@ clean:
 lint:
 	flake8 src
 
+## Run tests
+test:
+	pytest tests
+
 ## Test python environment is setup correctly
 test_environment:
 	$(PYTHON_INTERPRETER) test_environment.py
