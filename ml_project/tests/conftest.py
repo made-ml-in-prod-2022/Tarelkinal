@@ -1,9 +1,9 @@
-from textwrap import dedent
-import pytest
 import pandas as pd
 import numpy as np
-import yaml
 import logging
+import pytest
+import yaml
+from yaml import Loader
 
 
 @pytest.fixture()
