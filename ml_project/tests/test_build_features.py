@@ -1,6 +1,7 @@
 import sys
 import pytest
 from pathlib import Path
+from sklearn.exceptions import NotFittedError
 
 try:
     from ml_project.src.features.build_features import CatFeatureTargetEncoder
@@ -65,3 +66,14 @@ def test_cat_feature_target_encoder_class_fit_transform(
     dataset_ = cft_encoder.transform(dataset)
     assert encode_feature_name in dataset_.columns
     assert .2 == dataset_[encode_feature_name][0]
+
+
+def test_cat_feature_target_encoder_class_raise_error(dataset, logger):
+    with pytest.raises(NotFittedError):
+        cft_encoder = CatFeatureTargetEncoder(
+            cat_feature_list=['cat_feature'],
+            target_name='det_target',
+            logger=logger,
+            inplace=False
+        )
+        dataset_ = cft_encoder.transform(dataset)

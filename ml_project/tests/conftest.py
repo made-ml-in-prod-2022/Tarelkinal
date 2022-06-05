@@ -1,9 +1,9 @@
+import pytest
+import logging
+
 import pandas as pd
 import numpy as np
-import logging
-import pytest
-import yaml
-from yaml import Loader
+from sklearn.datasets import make_classification
 
 
 @pytest.fixture()
@@ -23,4 +23,17 @@ def dataset():
         'target': np.random.choice([0, 1], size=df_size),
         'det_target': [0]*400 + [1]*600,
     })
+    return df
+
+
+@pytest.fixture()
+def real_dataset():
+    X, y = make_classification(random_state=0)
+    feature_name_list = [f'f_{i}' for i in range(X.shape[1])]
+    target_name = ['target']
+    df = pd.DataFrame(
+        np.concatenate([X, y.reshape(-1, 1)], axis=1),
+        columns=feature_name_list + target_name
+    )
+
     return df

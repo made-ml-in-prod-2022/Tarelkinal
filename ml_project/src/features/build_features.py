@@ -7,6 +7,7 @@ from pathlib import Path
 import json
 
 import pandas as pd
+from sklearn.exceptions import NotFittedError
 
 try:
     from ml_project.entities import read_training_pipeline_params
@@ -14,8 +15,6 @@ except ModuleNotFoundError:
     project_dir = Path(__file__).resolve().parents[3]
     sys.path.append(str(project_dir))
     from ml_project.entities import read_training_pipeline_params
-
-# from dotenv import find_dotenv, load_dotenv
 
 INTERIM_DATA_FILEPATH = './data/interim'
 PROCESSED_DATA_FILEPATH = './data/processed'
@@ -36,6 +35,11 @@ class CatFeatureTargetEncoder:
         self.logger = logger
         self.encoded_dicts = dict()
         self.min_count = min_count
+        self.fitted = False
+
+    def check_id_fitted(self):
+        if not self.fitted:
+            raise NotFittedError('CatFeatureTargetEncoder not fitted')
 
     def fit(self, dataset):
         for feature_name in self.cat_feature_list:
@@ -43,10 +47,13 @@ class CatFeatureTargetEncoder:
             self.encoded_dicts.update(encoded_dict)
 
         self.logger.info(f'{id(self)} fitted')
+        self.fitted = True
 
         return self
 
     def transform(self, dataset):
+        self.check_id_fitted()
+
         dataset_ = dataset.copy()
         if self.inplace:
             for feature_name in self.cat_feature_list:
@@ -165,10 +172,5 @@ def main(config_filepath):
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    # not used in this stub but often useful for finding various files
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    # load_dotenv(find_dotenv())
 
     main()
