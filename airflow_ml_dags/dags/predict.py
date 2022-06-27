@@ -3,7 +3,6 @@ from pathlib import Path
 
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.operators.dummy import DummyOperator
 from airflow.sensors.filesystem import FileSensor
 from docker.types import Mount
 
@@ -15,6 +14,7 @@ from constants import (
     RAW_DATA_DIR,
     PREDICTIONS_DIR,
     START_DATE,
+    PROCESSED_DATA_DIR
 )
 
 
@@ -43,9 +43,19 @@ with DAG(
         mode="poke",
     )
 
+    preprocess = DockerOperator(
+        image="airflow-preprocess",
+        command=f"--input-dir {RAW_DATA_DIR} --output-dir {PROCESSED_DATA_DIR}",
+        network_mode=NETWORK,
+        task_id="docker-airflow-preprocess",
+        do_xcom_push=False,
+        mount_tmp_dir=False,
+        mounts=[Mount(source=str(Path(DATA_VOLUME_DIR)), target="/data", type='bind')]
+    )
+
     predict = DockerOperator(
         image="airflow-predict",
-        command=f"--input-dir {RAW_DATA_DIR} --output-dir {PREDICTIONS_DIR} --model-dir {MODEL_PATH}",
+        command=f"--input-dir {PROCESSED_DATA_DIR} --output-dir {PREDICTIONS_DIR} --model-dir {MODEL_PATH}",
         network_mode=NETWORK,
         task_id="docker-airflow-predict",
         do_xcom_push=False,
@@ -53,9 +63,4 @@ with DAG(
         mounts=[Mount(source=str(Path(DATA_VOLUME_DIR)), target="/data", type='bind')]
     )
 
-    dummy_start = DummyOperator(
-        task_id='dummy-predict-start',
-        default_args=DEFAULT_ARGS,
-    )
-
-    [check_data_sensor, check_model_sensor] >> dummy_start >> predict
+    [check_data_sensor, check_model_sensor] >> preprocess >> predict
