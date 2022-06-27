@@ -12,7 +12,7 @@ from constants import (
     DEFAULT_ARGS,
     MODEL_PATH,
     NETWORK,
-    PROCESSED_DATA_DIR,
+    RAW_DATA_DIR,
     PREDICTIONS_DIR,
     START_DATE,
 )
@@ -27,7 +27,7 @@ with DAG(
 
     check_data_sensor = FileSensor(
         task_id="wait-for-data",
-        filepath=str(Path("opt/airflow") / Path(PROCESSED_DATA_DIR) / "data.csv"),
+        filepath=str(Path(RAW_DATA_DIR) / "data.csv"),
         timeout=6000,
         poke_interval=10,
         retries=100,
@@ -45,7 +45,7 @@ with DAG(
 
     predict = DockerOperator(
         image="airflow-predict",
-        command=f"--input-dir {PROCESSED_DATA_DIR} --output-dir {PREDICTIONS_DIR} --model-dir {MODEL_PATH}",
+        command=f"--input-dir {RAW_DATA_DIR} --output-dir {PREDICTIONS_DIR} --model-dir {MODEL_PATH}",
         network_mode=NETWORK,
         task_id="docker-airflow-predict",
         do_xcom_push=False,
